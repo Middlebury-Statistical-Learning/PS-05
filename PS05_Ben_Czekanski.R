@@ -110,13 +110,13 @@ bias_sq_vs_var_plot <-
   scale_y_log10() +
   scale_x_log10()
 bias_sq_vs_var_plot
-ggsave(file="bias_sq_vs_var.pdf", plot=bias_sq_vs_var_plot, width = 6, height=4)
+ggsave(file="PS05_Ben_Czekanski_bias_sq_vs_var.pdf", plot=bias_sq_vs_var_plot, width = 6, height=4)
 
 # Plot MSE, bias_squared, variance
 MSE_plot <- 
   ggplot(results_tidy, aes(x=df, y=value, col=type)) +
   geom_line()
 MSE_plot
-ggsave(file="MSE.pdf", plot=MSE_plot, width = 6, height=4)
+ggsave(file="PS05_Ben_Czekanski_MSE.pdf", plot=MSE_plot, width = 6, height=4)
 
 
