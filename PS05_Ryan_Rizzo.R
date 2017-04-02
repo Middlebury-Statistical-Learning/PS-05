@@ -55,38 +55,37 @@ variance <- rep(0, length(df_vector))
 
 # Do your work here. You'll need a "pull back the curtain" moment at some point:
 
-# over all degrees of freedom
-for(i in 1:length(df_vector)) {
-  #where we store predictions
-  predictions<-rep(0, n_sim)
+#for each degree of freedom
+for(dfi in 1:length(df_vector)){
+  #store predictions here
+  predictions <- rep(0, n_sim)
   
-  #for all n_sim simulations
-  for(j in 1:n_sim){
-    
-    # create pseudo training data
-    train_data <- generate_sample(f, sample_size = 100, sigma = sigma) %>%
+  #simulations
+  for(i in 1:n_sim){
+    #create pseudo train
+    pseudo_train <- generate_sample(f, sample_size = sample_size, sigma = sigma) %>%
       dplyr::select(x, y)
     
-    # create pseudo test data. In this case single point x0
-    test_data <- data_frame(x=x0)
+    #generate pseudo test
+    pseudo_test <- data_frame(x=x0)
     
-    # Fit Model to train
-    model <- smooth.spline(x=train_data$x, y=train_data$y, df=df_vector[i])
+    #train model on pseudo_train with dfi degrees of freedom
+    model <- smooth.spline(x=pseudo_train$x, y=pseudo_train$y, df=df_vector[dfi])
     
-    # Predict model on test
-    predictions[j] <- predict(model, x=test_data$x) %>%
-      tbl_df() %>%
-      .[["y"]]
+    #predict on test data
+    predictions[i] <- predict(model, x=pseudo_test$x) %>% 
+      tbl_df() %>% 
+      .[['y']]
     
-    if(j %% 100 == 0){
+    if(i %% 100 == 0){
       print(i)
-      print(j)
+      print(dfi)
     }
-    
   }
-
-  # Truth: Pull Back Curtain
+  
   set.seed(11)
+  
+  #Store truth: Pull Back Curtain
   truth <- data_frame(
     x = rep(x0, n_sim),
     f_x = f(x),
@@ -97,11 +96,21 @@ for(i in 1:length(df_vector)) {
   truth <- truth %>%
     mutate(y_hat=predictions)
   
-  MSE[j]<- mean((truth$y-truth$y_hat)^2)
-  bias_squared[j] <- mean((truth$f_x-truth$y_hat))^2
-  variance[j] <- var(truth$y_hat)
+  #store results, square bias, get mse, get variance
+  results <- truth %>%
+    mutate( resid = y_hat-y, bias = f_x- y_hat ) %>%
+    summarize( mse = mean( resid^2 ), bias_sq = mean(bias)^2, variance = var( y_hat))
   
+  MSE[dfi] <- results %>%
+    .[['mse']]
+  
+  bias_squared[dfi] <- results %>%
+    .[['bias_sq']]
+  
+  variance[dfi] <- results %>%
+    .[['variance']]
 }
+
 
 
 
